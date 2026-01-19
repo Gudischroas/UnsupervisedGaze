@@ -23,8 +23,8 @@ class DefaultConfig(object):
 
     # Dataset used
     dataset_name = 'eve'
-    eve_raw_path = '/home/ubuntu/data/eve_dataset/'
-    eve_preprocessed_path = '/home/ubuntu/data/eve_preprocessed/'
+    eve_raw_path = './cvpr/data/eve_dataset/'
+    eve_preprocessed_path = './cvpr/data/eve_preprocessed/'
 
     # Data loading
     @property
@@ -42,7 +42,7 @@ class DefaultConfig(object):
         return False
     train_denoise_images = True
 
-    batch_size = 64 #12*4
+    batch_size = 16 #12*4
     num_epochs = 10.
     num_epochs_gaze_estimation = 2000
 
