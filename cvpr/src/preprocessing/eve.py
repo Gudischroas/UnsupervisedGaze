@@ -342,20 +342,18 @@ class EveDataset():
                                 patches[tags] = entry_path_rel
                     
                     if num_processes == 0:
-                        print(self.process_all_stimuli(stimuli_dir, camera, full_path, index_list, stimulus_subindices))
+                        self.process_all_stimuli(stimuli_dir, camera, full_path, index_list, stimulus_subindices)
                     else:
-                        pool.apply_async(self.process_all_stimuli, (stimuli_dir, camera, full_path, index_list, stimulus_subindices), callback=print)
+                        pool.apply_async(self.process_all_stimuli, (stimuli_dir, camera, full_path, index_list, stimulus_subindices))
             
         # Wait for all processes to finish
         if num_processes > 0:
             pool.close()
             pool.join()
-            print("All processes complete")
 
         index_path = os.path.join(output_dir, 'index.pbz2')
         with bz2.BZ2File(index_path, 'w') as f:
             cPickle.dump(patches, f)
-        print("Finished preprocessing eve")
 
 
 eve_input_path = './cvpr/data/eve_dataset'
