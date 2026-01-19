@@ -39,7 +39,8 @@ source_to_interval_ms = dict([
 ])
 
 sequence_segmentations = None
-cache_pkl_path = './src/segmentation_cache/10Hz_seqlen30.pkl'
+# Will be computed relative to the repository `src` directory at runtime
+cache_pkl_path = None
 
 
 class EveConfig():
@@ -81,10 +82,10 @@ class EveDataset():
 
         # Load or calculate sequence segmentations (start/end indices)
         global cache_pkl_path, sequence_segmentations
-        cache_pkl_path = (
-            './src/segmentation_cache/%dHz_seqlen%d.pkl' % (
-                eve_config.assumed_frame_rate, eve_config.max_sequence_len,
-            )
+        cache_pkl_path = os.path.join(
+            str(file_dir_path.parent),
+            'segmentation_cache',
+            '%dHz_seqlen%d.pkl' % (eve_config.assumed_frame_rate, eve_config.max_sequence_len)
         )
         if sequence_segmentations is None:
             if not os.path.isfile(cache_pkl_path):
@@ -153,6 +154,11 @@ class EveDataset():
                         # print('%s: %d' % (source_path_pre, len(current_outputs)))
 
         # Do the caching
+        # Ensure cache directory exists before writing
+        cache_dir = os.path.dirname(cache_pkl_path)
+        if cache_dir and not os.path.isdir(cache_dir):
+            os.makedirs(cache_dir, exist_ok=True)
+
         with open(cache_pkl_path, 'wb') as f:
             pickle.dump(output_to_cache, f)
 
@@ -352,8 +358,8 @@ class EveDataset():
         print("Finished preprocessing eve")
 
 
-eve_input_path = '/home/ubuntu/data/eve_dataset/'
-eve_output_path = '/home/ubuntu/data/eve_preprocessed/'
+eve_input_path = './cvpr/data/eve_dataset'
+eve_output_path = './cvpr/data/eve_preprocessed/'
 eve_cameras = ['basler', 'webcam_l', 'webcam_c', 'webcam_r']
 eve_stimuli = ['image', 'video', 'wikipedia']
 
