@@ -297,7 +297,7 @@ class EveDataset():
 
     def preprocess(self, output_dir):
         patches = MultiDict(['sub', 'head', 'gaze', 'app'])
-        num_processes = 32
+        num_processes = 16
         if num_processes > 0:
             pool = Pool(processes=num_processes)
 

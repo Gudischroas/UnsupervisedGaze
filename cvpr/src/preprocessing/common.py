@@ -50,13 +50,20 @@ class VideoReader(object):
         # Get frames
         self.preparations()
         input_params, output_params = self.get_params()
-        buffer, _ = (
-            ffmpeg.input(self.video_path, **input_params)
-            .output('pipe:', format='rawvideo', pix_fmt='rgb24', loglevel="quiet",
-                    **output_params)
-            .run(capture_stdout=True, quiet=True)
-        )
-        frames = np.frombuffer(buffer, np.uint8).reshape(-1, self.height, self.width, 3)
+        try:
+            print(f"Debug: Video path - {self.video_path}")
+            print(f"Debug: Input params - {input_params}")
+            buffer, _ = (
+                ffmpeg.input(self.video_path, **input_params)
+                .output('pipe:', format='rawvideo', pix_fmt='rgb24', loglevel="quiet",
+                        **output_params)
+                .run(capture_stdout=True, quiet=True)
+            )
+            frames = np.frombuffer(buffer, np.uint8).reshape(-1, self.height, self.width, 3)
+        except ffmpeg._run.Error as e:
+            print(f"FFmpeg Error: {e}")
+            print(f"FFmpeg stderr: {e.stderr.decode('utf-8')}")
+            raise
 
         # Get timestamps
         timestamps = self.timestamps
@@ -78,7 +85,7 @@ class VideoReader(object):
             self.width, self.height = self.output_size
 
         # Read timestamps file
-        self.timestamps = np.loadtxt(self.timestamps_path).astype(np.int)
+        self.timestamps = np.loadtxt(self.timestamps_path).astype(int)
 
     def __enter__(self):
         assert(self.is_async)
