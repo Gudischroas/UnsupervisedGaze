@@ -70,7 +70,7 @@ class PatchDataset(Dataset):
         for combo_i, tag_combo in enumerate(self.tag_combos):
             for tag_name, tag_value in tag_combo.items():
                 if tag_name not in self.tags:
-                    self.tags[tag_name] = np.empty((len(self.tag_combos),), dtype=np.int)
+                    self.tags[tag_name] = np.empty((len(self.tag_combos),), dtype=int)
                 self.tags[tag_name][combo_i] = tag_value
         self.tags = container_to_tensors(self.tags)
         self.unique_tag_perms = {}
@@ -171,12 +171,12 @@ class PatchDataset(Dataset):
         data['sub'] = sample_key['sub']
         data['paths'] = []
         data['frames'] = np.empty((V, 3, config.raw_input_size, config.raw_input_size), dtype=np.uint8)
-        data['valids'] = np.empty((V,), dtype=np.bool)
+        data['valids'] = np.empty((V,), dtype=bool)
         # Gaze and head data will be in format: V x 3
         data['gaze_dirs'] = np.empty((V, 3), dtype=np.float32)
         data['head_dirs'] = np.empty((V, 3), dtype=np.float32)
-        data['eye_sides'] = np.empty((V,), dtype=np.bool)
-        data['glasses_ons'] = np.empty((V,), dtype=np.bool)
+        data['eye_sides'] = np.empty((V,), dtype=bool)
+        data['glasses_ons'] = np.empty((V,), dtype=bool)
         for combo_i, tag_combo in enumerate(self.tag_combos):
             combo_tags = {}
             combo_tags['sub'] = sample_key['sub']
