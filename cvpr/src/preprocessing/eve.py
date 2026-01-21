@@ -356,8 +356,8 @@ class EveDataset():
             cPickle.dump(patches, f)
 
 
-eve_input_path = './cvpr/data/eve_dataset'
-eve_output_path = './cvpr/data/eve_preprocessed/'
+eve_input_path = '/home/gudi/project/data/eve_dataset'
+eve_output_path = '/home/gudi/project/data/eve_preprocessed/'
 eve_cameras = ['basler', 'webcam_l', 'webcam_c', 'webcam_r']
 eve_stimuli = ['image', 'video', 'wikipedia']
 

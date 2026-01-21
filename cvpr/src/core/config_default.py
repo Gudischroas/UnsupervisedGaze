@@ -23,8 +23,8 @@ class DefaultConfig(object):
 
     # Dataset used
     dataset_name = 'eve'
-    eve_raw_path = './cvpr/data/eve_dataset/'
-    eve_preprocessed_path = './cvpr/data/eve_preprocessed/'
+    eve_raw_path = '/home/gudi/project/data/eve_dataset/'
+    eve_preprocessed_path = '/home/gudi/project/data/eve_preprocessed/'
 
     # Data loading
     @property
