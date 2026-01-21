@@ -229,6 +229,17 @@ class CrossEncoder(nn.Module):
             recon_list.add_reference_features(reference_features)           
 
         # Get final features and ground truth for generator from the ReconstructionList
+        # If no reconstruction entries were added (e.g., no differing tag permutations
+        # in a small test), avoid calling join() which would torch.cat empty lists.
+        if len(recon_list.concat_features) == 0 and len(recon_list.reference_frames) == 0:
+            output_dict = {'losses': OrderedDict(), 'frames': OrderedDict()}
+            # Record valid inputs
+            output_dict['valid'] = {}
+            output_dict['valid']['input'] = torch.sum(input_data['valids'].type(torch.IntTensor))
+            # Zero total loss tensor on correct device
+            output_dict['losses']['total'] = torch.tensor(0., device=device)
+            return output_dict
+
         recon_features, recon_gt, recon_ref, recon_valids, recon_types = recon_list.join()
 
         # Pass through generator
