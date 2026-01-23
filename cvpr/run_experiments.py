@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-"""Copyright 2022 Toyota Research Institute.  All rights reserved."""
 
 import argparse
 import subprocess
