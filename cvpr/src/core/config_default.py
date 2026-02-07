@@ -76,7 +76,7 @@ class DefaultConfig(object):
     gradient_clip_amount = 5.0
 
     # WANDB
-    wandb_project_name = 'eyesontheroad'
+    wandb_project_name = None
     exp_name = 'temp-exp-name'
     group_name = ''
     exp_tags = ['default',]
