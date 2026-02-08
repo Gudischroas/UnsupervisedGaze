@@ -316,7 +316,6 @@ if __name__ == '__main__':
     """
     使用方式:
     conda activate gaze_rocm
-    cd /home/gudi/project/UnsupervisedGaze/cvpr
     python src/preprocessing/columbia.py
     """
     
