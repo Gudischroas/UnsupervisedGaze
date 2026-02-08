@@ -1,5 +1,3 @@
-"""Copyright 2022 Toyota Research Institute.  All rights reserved."""
-
 import numpy as np
 from collections import OrderedDict
 

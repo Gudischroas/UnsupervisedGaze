@@ -1,5 +1,3 @@
-"""Copyright 2022 Toyota Research Institute.  All rights reserved."""
-
 import torch
 from torch.nn import functional as F
 

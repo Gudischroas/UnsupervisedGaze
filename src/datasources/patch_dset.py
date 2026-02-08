@@ -1,5 +1,3 @@
-"""Copyright 2022 Toyota Research Institute.  All rights reserved."""
-
 from frozendict import frozendict
 import numpy as np
 import random
