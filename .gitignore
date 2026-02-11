@@ -131,3 +131,6 @@ dmypy.json
 outputs/
 wandb/
 
+# Paper
+paper/
+
