@@ -104,6 +104,9 @@ class DefaultConfig(object):
     cross_encoder_load_pretrained = False
     cross_encoder_checkpoint_folder = ""
 
+    # CBAM attention module
+    use_cbam = True
+
     # Reference feature parameters
     reference_dropout = False
     reference_comb_func = 'mean'  # first / mean / max / median / vec_median

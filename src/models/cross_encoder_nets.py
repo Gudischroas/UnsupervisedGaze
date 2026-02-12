@@ -11,6 +11,58 @@ config = DefaultConfig()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
+class ChannelAttention(nn.Module):
+    """CBAM 通道注意力模块：学习"关注什么特征通道" """
+    def __init__(self, channels, reduction=16):
+        super(ChannelAttention, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(channels, channels // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels // reduction, channels, bias=False)
+        )
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        avg_out = self.fc(self.avg_pool(x).view(b, c))
+        max_out = self.fc(self.max_pool(x).view(b, c))
+        return x * self.sigmoid(avg_out + max_out).view(b, c, 1, 1)
+
+
+class SpatialAttention(nn.Module):
+    """CBAM 空间注意力模块：学习"关注特征图的哪个空间区域" """
+    def __init__(self, kernel_size=7):
+        super(SpatialAttention, self).__init__()
+        self.conv = nn.Conv2d(2, 1, kernel_size=kernel_size,
+                              padding=kernel_size // 2, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        spatial_att = self.sigmoid(self.conv(torch.cat([avg_out, max_out], dim=1)))
+        return x * spatial_att
+
+
+class CBAM(nn.Module):
+    """卷积块注意力机制 (Convolutional Block Attention Module)
+
+    顺序应用通道注意力和空间注意力，在不显著增加参数量的情况下
+    提纯特征表达，强调对视线估计最有价值的通道和空间区域。
+    """
+    def __init__(self, channels, reduction=16, kernel_size=7):
+        super(CBAM, self).__init__()
+        self.channel_attention = ChannelAttention(channels, reduction)
+        self.spatial_attention = SpatialAttention(kernel_size)
+
+    def forward(self, x):
+        x = self.channel_attention(x)
+        x = self.spatial_attention(x)
+        return x
+
+
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
@@ -29,7 +81,14 @@ class BaselineEncoder(Encoder):
         self.cnn_layers = ResNet(block=BasicBlock, layers=[2, 2, 2, 2],
                                  num_classes=self.total_features,
                                  norm_layer=nn.InstanceNorm2d)
-        
+
+        # CBAM: 在 ResNet-18 Layer4 输出后、全局池化前添加单个 CBAM
+        # Layer4 输出 512 通道特征图，CBAM 在此做通道+空间注意力提纯
+        if config.use_cbam:
+            self.cbam = CBAM(channels=512, reduction=16, kernel_size=7)
+        else:
+            self.cbam = None
+
         self.fc_features = nn.ModuleDict()
         for feature_name, num_feature in config.feature_sizes.items():
             self.fc_features[feature_name] = nn.Sequential(
@@ -47,7 +106,25 @@ class BaselineEncoder(Encoder):
             )
 
     def forward(self, eye_image):
-        x = self.cnn_layers(eye_image)
+        # 手动展开 ResNet 前向传播，以便在 layer4 和 avgpool 之间插入 CBAM
+        x = self.cnn_layers.conv1(eye_image)
+        x = self.cnn_layers.bn1(x)
+        x = self.cnn_layers.relu(x)
+        x = self.cnn_layers.maxpool(x)
+
+        x = self.cnn_layers.layer1(x)   # [B, 64,  H/4,  W/4]
+        x = self.cnn_layers.layer2(x)   # [B, 128, H/8,  W/8]
+        x = self.cnn_layers.layer3(x)   # [B, 256, H/16, W/16]
+        x = self.cnn_layers.layer4(x)   # [B, 512, H/32, W/32]
+
+        # CBAM 在 ResNet 全部残差层结束后、全局池化前做注意力加权
+        if self.cbam is not None:
+            x = self.cbam(x)             # [B, 512, H/32, W/32]
+
+        x = self.cnn_layers.avgpool(x)  # [B, 512, 1, 1]
+        x = torch.flatten(x, 1)         # [B, 512]
+        x = self.cnn_layers.fc(x)       # [B, total_features]
+
         out_features = OrderedDict()
         out_confs = OrderedDict()
         for feature_name in config.feature_sizes.keys():
