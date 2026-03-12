@@ -82,13 +82,13 @@ class BaselineEncoder(Encoder):
                                  num_classes=self.total_features,
                                  norm_layer=nn.InstanceNorm2d)
 
-        # CBAM: 在 Layer3→Layer4 之间 和 Layer4→avgpool 之间各插入一个 CBAM
-        if config.use_cbam:
-            self.cbam_mid = CBAM(channels=256, reduction=16, kernel_size=7)   # Layer3 输出 256 通道
-            self.cbam = CBAM(channels=512, reduction=16, kernel_size=7)       # Layer4 输出 512 通道
-        else:
-            self.cbam_mid = None
-            self.cbam = None
+        # CBAM: 根据 num_cbam 在不同层之间插入 CBAM
+        # num_cbam >= 1: Layer4→avgpool
+        # num_cbam >= 2: Layer3→Layer4
+        # num_cbam >= 3: Layer2→Layer3
+        self.cbam = CBAM(channels=512, reduction=16, kernel_size=7) if config.num_cbam >= 1 else None
+        self.cbam_mid = CBAM(channels=256, reduction=16, kernel_size=7) if config.num_cbam >= 2 else None
+        self.cbam_early = CBAM(channels=128, reduction=16, kernel_size=7) if config.num_cbam >= 3 else None
 
         self.fc_features = nn.ModuleDict()
         for feature_name, num_feature in config.feature_sizes.items():
@@ -115,6 +115,11 @@ class BaselineEncoder(Encoder):
 
         x = self.cnn_layers.layer1(x)   # [B, 64,  H/4,  W/4]
         x = self.cnn_layers.layer2(x)   # [B, 128, H/8,  W/8]
+
+        # CBAM-early: 在 Layer2 输出后、Layer3 之前做注意力加权
+        if self.cbam_early is not None:
+            x = self.cbam_early(x)       # [B, 128, H/8,  W/8]
+
         x = self.cnn_layers.layer3(x)   # [B, 256, H/16, W/16]
 
         # CBAM-mid: 在 Layer3 输出后、Layer4 之前做注意力加权

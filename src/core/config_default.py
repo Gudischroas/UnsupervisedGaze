@@ -105,7 +105,8 @@ class DefaultConfig(object):
     cross_encoder_checkpoint_folder = ""
 
     # CBAM attention module
-    use_cbam = True
+    # num_cbam: 0=无CBAM, 1=Layer4后, 2=Layer3后+Layer4后, 3=Layer2后+Layer3后+Layer4后
+    num_cbam = 3
 
     # Reference feature parameters
     reference_dropout = False
