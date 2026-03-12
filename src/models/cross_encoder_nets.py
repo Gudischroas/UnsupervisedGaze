@@ -82,11 +82,12 @@ class BaselineEncoder(Encoder):
                                  num_classes=self.total_features,
                                  norm_layer=nn.InstanceNorm2d)
 
-        # CBAM: 在 ResNet-18 Layer4 输出后、全局池化前添加单个 CBAM
-        # Layer4 输出 512 通道特征图，CBAM 在此做通道+空间注意力提纯
+        # CBAM: 在 Layer3→Layer4 之间 和 Layer4→avgpool 之间各插入一个 CBAM
         if config.use_cbam:
-            self.cbam = CBAM(channels=512, reduction=16, kernel_size=7)
+            self.cbam_mid = CBAM(channels=256, reduction=16, kernel_size=7)   # Layer3 输出 256 通道
+            self.cbam = CBAM(channels=512, reduction=16, kernel_size=7)       # Layer4 输出 512 通道
         else:
+            self.cbam_mid = None
             self.cbam = None
 
         self.fc_features = nn.ModuleDict()
@@ -115,9 +116,14 @@ class BaselineEncoder(Encoder):
         x = self.cnn_layers.layer1(x)   # [B, 64,  H/4,  W/4]
         x = self.cnn_layers.layer2(x)   # [B, 128, H/8,  W/8]
         x = self.cnn_layers.layer3(x)   # [B, 256, H/16, W/16]
+
+        # CBAM-mid: 在 Layer3 输出后、Layer4 之前做注意力加权
+        if self.cbam_mid is not None:
+            x = self.cbam_mid(x)         # [B, 256, H/16, W/16]
+
         x = self.cnn_layers.layer4(x)   # [B, 512, H/32, W/32]
 
-        # CBAM 在 ResNet 全部残差层结束后、全局池化前做注意力加权
+        # CBAM: 在 Layer4 输出后、全局池化前做注意力加权
         if self.cbam is not None:
             x = self.cbam(x)             # [B, 512, H/32, W/32]
 
