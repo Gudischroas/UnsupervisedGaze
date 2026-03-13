@@ -107,6 +107,8 @@ class DefaultConfig(object):
     # CBAM attention module
     # num_cbam: 0=无CBAM, 1=Layer4后, 2=Layer3后+Layer4后, 3=Layer2后+Layer3后+Layer4后
     num_cbam = 3
+    # MSFF: Multi-Scale Feature Fusion (Layer2/3/4 全局特征融合)
+    use_msff = False
 
     # Reference feature parameters
     reference_dropout = False

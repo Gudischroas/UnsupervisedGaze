@@ -63,6 +63,29 @@ class CBAM(nn.Module):
         return x
 
 
+class MultiScaleFeatureFusion(nn.Module):
+    """融合 Layer2/Layer3/Layer4 的全局特征，输出 512 维增强向量。"""
+    def __init__(self):
+        super(MultiScaleFeatureFusion, self).__init__()
+        self.proj_l2 = nn.Linear(128, 512)
+        self.proj_l3 = nn.Linear(256, 512)
+        self.proj_l4 = nn.Identity()
+        self.weight_logits = nn.Parameter(torch.zeros(3))
+
+    def forward(self, l2_feat, l3_feat, l4_feat):
+        # 全局平均池化，拿到每层的语义向量
+        l2 = torch.flatten(torch.mean(l2_feat, dim=(2, 3), keepdim=True), 1)
+        l3 = torch.flatten(torch.mean(l3_feat, dim=(2, 3), keepdim=True), 1)
+        l4 = torch.flatten(torch.mean(l4_feat, dim=(2, 3), keepdim=True), 1)
+
+        l2 = self.proj_l2(l2)
+        l3 = self.proj_l3(l3)
+        l4 = self.proj_l4(l4)
+
+        w = torch.softmax(self.weight_logits, dim=0)
+        return w[0] * l2 + w[1] * l3 + w[2] * l4
+
+
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
@@ -89,6 +112,7 @@ class BaselineEncoder(Encoder):
         self.cbam = CBAM(channels=512, reduction=16, kernel_size=7) if config.num_cbam >= 1 else None
         self.cbam_mid = CBAM(channels=256, reduction=16, kernel_size=7) if config.num_cbam >= 2 else None
         self.cbam_early = CBAM(channels=128, reduction=16, kernel_size=7) if config.num_cbam >= 3 else None
+        self.msff = MultiScaleFeatureFusion() if config.use_msff else None
 
         self.fc_features = nn.ModuleDict()
         for feature_name, num_feature in config.feature_sizes.items():
@@ -114,19 +138,22 @@ class BaselineEncoder(Encoder):
         x = self.cnn_layers.maxpool(x)
 
         x = self.cnn_layers.layer1(x)   # [B, 64,  H/4,  W/4]
-        x = self.cnn_layers.layer2(x)   # [B, 128, H/8,  W/8]
+        l2 = self.cnn_layers.layer2(x)  # [B, 128, H/8,  W/8]
+        x = l2
 
         # CBAM-early: 在 Layer2 输出后、Layer3 之前做注意力加权
         if self.cbam_early is not None:
             x = self.cbam_early(x)       # [B, 128, H/8,  W/8]
 
-        x = self.cnn_layers.layer3(x)   # [B, 256, H/16, W/16]
+        l3 = self.cnn_layers.layer3(x)  # [B, 256, H/16, W/16]
+        x = l3
 
         # CBAM-mid: 在 Layer3 输出后、Layer4 之前做注意力加权
         if self.cbam_mid is not None:
             x = self.cbam_mid(x)         # [B, 256, H/16, W/16]
 
-        x = self.cnn_layers.layer4(x)   # [B, 512, H/32, W/32]
+        l4 = self.cnn_layers.layer4(x)  # [B, 512, H/32, W/32]
+        x = l4
 
         # CBAM: 在 Layer4 输出后、全局池化前做注意力加权
         if self.cbam is not None:
@@ -134,6 +161,11 @@ class BaselineEncoder(Encoder):
 
         x = self.cnn_layers.avgpool(x)  # [B, 512, 1, 1]
         x = torch.flatten(x, 1)         # [B, 512]
+
+        # MSFF: 融合多尺度特征后与 Layer4 全局特征做残差增强
+        if self.msff is not None:
+            x = x + self.msff(l2, l3, l4)
+
         x = self.cnn_layers.fc(x)       # [B, total_features]
 
         out_features = OrderedDict()
