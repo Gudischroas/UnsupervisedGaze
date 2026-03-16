@@ -109,6 +109,9 @@ class DefaultConfig(object):
     num_cbam = 3
     # MSFF: Multi-Scale Feature Fusion (Layer2/3/4 全局特征融合)
     use_msff = False
+    # MSFF gate: x + beta * msff，其中 beta 为可学习标量门控
+    use_msff_gate = False
+    msff_beta_init = 0.1
 
     # Reference feature parameters
     reference_dropout = False

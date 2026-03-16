@@ -113,6 +113,11 @@ class BaselineEncoder(Encoder):
         self.cbam_mid = CBAM(channels=256, reduction=16, kernel_size=7) if config.num_cbam >= 2 else None
         self.cbam_early = CBAM(channels=128, reduction=16, kernel_size=7) if config.num_cbam >= 3 else None
         self.msff = MultiScaleFeatureFusion() if config.use_msff else None
+        if config.use_msff and config.use_msff_gate:
+            beta_init = float(np.clip(config.msff_beta_init, 1e-4, 1.0 - 1e-4))
+            self.msff_beta_logit = nn.Parameter(torch.tensor(np.log(beta_init / (1.0 - beta_init)), dtype=torch.float32))
+        else:
+            self.msff_beta_logit = None
 
         self.fc_features = nn.ModuleDict()
         for feature_name, num_feature in config.feature_sizes.items():
@@ -164,7 +169,12 @@ class BaselineEncoder(Encoder):
 
         # MSFF: 融合多尺度特征后与 Layer4 全局特征做残差增强
         if self.msff is not None:
-            x = x + self.msff(l2, l3, l4)
+            msff_out = self.msff(l2, l3, l4)
+            if self.msff_beta_logit is not None:
+                beta = torch.sigmoid(self.msff_beta_logit)
+                x = x + beta * msff_out
+            else:
+                x = x + msff_out
 
         x = self.cnn_layers.fc(x)       # [B, total_features]
 
