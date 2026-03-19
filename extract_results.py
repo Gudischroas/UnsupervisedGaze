@@ -2,10 +2,14 @@
 提取 eg 视线估计实验结果
 目标实验:
   - eg-sga-pair-lr-v222-d111-eve-1CBAM-default
-    - eg-sga-pair-lr-v222-d111-eve-1CBAM-MSFF-default
-    - eg-sga-pair-lr-v222-d111-eve-2CBAM-MSFF-default
-    - eg-sga-pair-lr-v222-d111-eve-3CBAM-MSFF-default
-    - eg-sga-pair-lr-v222-d111-eve-MSFF-default
+  - eg-sga-pair-lr-v222-d111-eve-1CBAM-MSFF-default
+    - eg-sga-pair-lr-v222-d111-eve-1CBAM-MSFFG-default
+  - eg-sga-pair-lr-v222-d111-eve-2CBAM-MSFF-default
+    - eg-sga-pair-lr-v222-d111-eve-2CBAM-MSFFG-default
+  - eg-sga-pair-lr-v222-d111-eve-3CBAM-MSFF-default
+        - eg-sga-pair-lr-v222-d111-eve-3CBAM-MSFFG-default
+  - eg-sga-pair-lr-v222-d111-eve-MSFF-default
+    - eg-sga-pair-lr-v222-d111-eve-MSFFG-default
   - eg-sga-pair-lr-v222-d111-eve-nocbam-default
   - eg-sga-pair-lr-v222-d111-eve-1CBAM-50epoch-default
 
@@ -29,9 +33,13 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), "outputs", "checkpoints")
 EXPERIMENTS = {
     "1CBAM":   "eg-sga-pair-lr-v222-d111-eve-1CBAM-default",
     "1CBAM_MSFF": "eg-sga-pair-lr-v222-d111-eve-1CBAM-MSFF-default",
+    "1CBAM_MSFFG": "eg-sga-pair-lr-v222-d111-eve-1CBAM-MSFFG-default",
     "2CBAM_MSFF": "eg-sga-pair-lr-v222-d111-eve-2CBAM-MSFF-default",
+    "2CBAM_MSFFG": "eg-sga-pair-lr-v222-d111-eve-2CBAM-MSFFG-default",
     "3CBAM_MSFF": "eg-sga-pair-lr-v222-d111-eve-3CBAM-MSFF-default",
+    "3CBAM_MSFFG": "eg-sga-pair-lr-v222-d111-eve-3CBAM-MSFFG-default",
     "MSFF": "eg-sga-pair-lr-v222-d111-eve-MSFF-default",
+    "MSFFG": "eg-sga-pair-lr-v222-d111-eve-MSFFG-default",
     "2CBAM":   "eg-sga-pair-lr-v222-d111-eve-2CBAM-default",
     "3CBAM":   "eg-sga-pair-lr-v222-d111-eve-3CBAM-default",
     "nocbam":  "eg-sga-pair-lr-v222-d111-eve-nocbam-default",
