@@ -12,6 +12,7 @@
     - eg-sga-pair-lr-v222-d111-eve-MSFFG-default
   - eg-sga-pair-lr-v222-d111-eve-nocbam-default
   - eg-sga-pair-lr-v222-d111-eve-1CBAM-50epoch-default
+  - eg-sga-pair-lr-v222-d111-eve-2CBAM-MSFFG-50epoch-default
 
 子目录命名规则: {exp_name}-{run_id}-{fold_id}
   run_id  : 0001/0002/... 对应预训练的不同随机种子运行
@@ -44,6 +45,7 @@ EXPERIMENTS = {
     "3CBAM":   "eg-sga-pair-lr-v222-d111-eve-3CBAM-default",
     "nocbam":  "eg-sga-pair-lr-v222-d111-eve-nocbam-default",
     "1CBAM-50epoch": "eg-sga-pair-lr-v222-d111-eve-1CBAM-50epoch-default",
+    "2CBAM-MSFFG-50epoch": "eg-sga-pair-lr-v222-d111-eve-2CBAM-MSFFG-50epoch-default",
 }
 
 # 匹配最终 Eval 行:
