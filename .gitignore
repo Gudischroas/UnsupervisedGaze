@@ -134,5 +134,5 @@ wandb/
 # Paper
 paper/
 
-# Realtime
-realtime/
+# win version outputs
+win_outputs/
